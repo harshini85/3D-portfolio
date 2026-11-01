@@ -59,6 +59,30 @@
       max-width: 520px;
     }
 
+    /* Skills tags are styled like glowing badges for a cleaner portfolio section */
+    #skills .card {
+      max-width: 700px;
+    }
+
+    .skills-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .skill-tag {
+      padding: 10px 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(96, 165, 250, 0.5);
+      background: rgba(15, 118, 110, 0.15);
+      color: #e2e8f0;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      box-shadow: 0 0 18px rgba(59, 130, 246, 0.6);
+      text-shadow: 0 0 12px rgba(125, 211, 252, 0.9);
+    }
+
     .btn {
       display: inline-block;
       margin-top: 16px;
@@ -103,6 +127,20 @@
     </div>
   </section>
 
+  <!-- New Skills section with glowing technology tags -->
+  <section id="skills">
+    <div class="card">
+      <h2>Skills</h2>
+      <div class="skills-tags">
+        <span class="skill-tag">C</span>
+        <span class="skill-tag">HTML</span>
+        <span class="skill-tag">CSS</span>
+        <span class="skill-tag">JavaScript</span>
+        <span class="skill-tag">Three.js</span>
+      </div>
+    </div>
+  </section>
+
   <div class="hint">Move the mouse · Scroll down</div>
 
   <script type="importmap">
@@ -129,13 +167,34 @@
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(window.innerWidth, window.innerHeight);
 
-    // Main object: a shiny torus knot
-    const knot = new THREE.Mesh(
-      new THREE.TorusKnotGeometry(8, 2.5, 160, 24),
-      new THREE.MeshStandardMaterial({ color: 0x7c3aed, metalness: 0.5, roughness: 0.25 })
+    // Replace the purple torus knot with a glowing wireframe sphere that gently pulses in size.
+    const heroSphere = new THREE.Mesh(
+      new THREE.SphereGeometry(7.5, 32, 32),
+      new THREE.MeshBasicMaterial({
+        color: 0xa78bfa,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.9
+      })
     );
-    knot.position.x = 12;
-    scene.add(knot);
+    heroSphere.position.x = 12;
+    scene.add(heroSphere);
+
+    const sphereGlow = new THREE.Mesh(
+      new THREE.SphereGeometry(8.2, 32, 32),
+      new THREE.MeshBasicMaterial({
+        color: 0x7c3aed,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.18
+      })
+    );
+    sphereGlow.position.x = 12;
+    scene.add(sphereGlow);
+
+    const sphereLight = new THREE.PointLight(0xa78bfa, 9, 40, 2);
+    sphereLight.position.set(12, 0, 10);
+    scene.add(sphereLight);
 
     // Lights
     const ambient = new THREE.AmbientLight(0xffffff, 0.4);
@@ -161,11 +220,15 @@
 
     // Floating cubes made with a loop
     const cubes = [];
-    const cubeColors = [0x22d3ee, 0xf472b6, 0xfacc15, 0x34d399];
+    const cubeColors = [0x22d3ee, 0xf472b6, 0xfacc15, 0x34d399, 0x60a5fa, 0xf9a8d4];
     for (let i = 0; i < 12; i++) {
       const cube = new THREE.Mesh(
         new THREE.BoxGeometry(1.5, 1.5, 1.5),
-        new THREE.MeshStandardMaterial({ color: cubeColors[i % cubeColors.length] })
+        new THREE.MeshStandardMaterial({
+          color: cubeColors[i % cubeColors.length],
+          emissive: cubeColors[i % cubeColors.length],
+          emissiveIntensity: 0.25
+        })
       );
       cube.position.set(
         (Math.random() - 0.5) * 60,
@@ -176,7 +239,16 @@
       cubes.push(cube);
     }
 
-    // Mouse movement tilts the knot
+    // Clicking anywhere changes the cube colors to keep the scene reactive and playful.
+    document.addEventListener("click", () => {
+      cubes.forEach((cube) => {
+        const nextColor = cubeColors[Math.floor(Math.random() * cubeColors.length)];
+        cube.material.color.setHex(nextColor);
+        cube.material.emissive.setHex(nextColor);
+      });
+    });
+
+    // Mouse movement tilts the sphere
     const mouse = { x: 0, y: 0 };
     window.addEventListener("mousemove", (event) => {
       mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
@@ -193,9 +265,13 @@
     const clock = new THREE.Clock();
     function animate() {
       const time = clock.getElapsedTime();
+      const pulseScale = 1 + Math.sin(time * 1.5) * 0.18;
 
-      knot.rotation.x = time * 0.3 + mouse.y * 0.5;
-      knot.rotation.y = time * 0.4 + mouse.x * 0.5;
+      heroSphere.rotation.x = time * 0.3 + mouse.y * 0.5;
+      heroSphere.rotation.y = time * 0.4 + mouse.x * 0.5;
+      heroSphere.scale.setScalar(pulseScale);
+      sphereGlow.scale.setScalar(1 + Math.sin(time * 1.5) * 0.12);
+      sphereLight.position.x = 12 + Math.sin(time * 0.8) * 2;
 
       cubes.forEach((cube, i) => {
         cube.rotation.x += 0.01;
